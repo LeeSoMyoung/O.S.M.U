@@ -1,46 +1,111 @@
-"""키워드 연금술 (Keyword Alchemy).
+"""키워드 연금술 (v2 — golden_keyword.py 의 처방형 로직 통합).
 
-description의 두 번째 라이프사이클 단계:
-    "보통 수준 키워드를 단순히 버리지 않고 변형해 가치 있는 키워드로 재가공"
-    예) '다이어트' → '단기간 다이어트 식단' / '직장인 다이어트 방법'
+[ 처방 카테고리 ]
+  · 상업의도_부족 → 상업 수식어 (추천/비교/후기…)
+  · 경쟁도_높음   → 대상/상황/가격/기간 수식어 (직장인/초보자/가성비…)
+  · 트렌드_낮음   → 목적/시의성 수식어 (2026년/내돈내산/실패 없는…)
 
-핵심 아이디어:
-    원 키워드의 점수가 medium이면, 의도어/범위어를 한두 개 더 붙여서
-    경쟁도를 떨어뜨리고 상업적 의도를 높인 변형을 만든다.
+[ 두 가지 호출 방식 ]
+  · transmute(keyword, max_variants)            : 약점 정보 없을 때 — 모든 처방 사용 (후방 호환)
+  · transmute_with_diagnosis(keyword, weak, n)  : 약점 진단 결과를 받아 처방형 변형
 """
 from __future__ import annotations
 
 import itertools
-from typing import List
+from typing import List, Sequence
 
-ALCHEMY_INTENT = ["추천", "방법", "비교", "TOP5", "순위", "후기"]
-ALCHEMY_SCOPE = ["직장인", "초보자", "단기간", "2025", "집에서", "주말"]
+# ── 수식어 뱅크 (golden_keyword.py 와 동일) ───────────
+ALCHEMY_TEMPLATES = {
+    "상업의도": [
+        "추천", "비교", "후기", "순위", "방법", "장단점",
+        "리뷰", "효과", "선택 방법", "어떻게 하나요",
+        "잘하는 법", "잘 고르는 법",
+    ],
+    "대상": [
+        "대학생", "직장인", "사회초년생", "30대", "40대", "50대",
+        "주부", "자취생", "초보자", "여성", "남성",
+        "임산부", "중년 여성", "시니어",
+    ],
+    "상황": [
+        "처음 시작하는", "혼자서", "집에서", "10분 만에",
+        "간단하게", "입문", "바쁜 직장인을 위한",
+        "운동 없이", "식단만으로", "꾸준히 하는",
+        "주말에", "아침에",
+    ],
+    "가격": [
+        "가성비", "저렴하게", "무료로", "저예산",
+        "비용 없이", "돈 안 드는", "월 1만원으로",
+    ],
+    "목적": [
+        "선물용", "내돈내산 후기", "실사용 후기",
+        "2026년", "최신", "효과 좋은",
+        "실패 없는", "검증된",
+    ],
+    "기간": [
+        "1주일", "한 달", "3개월 만에",
+        "빠르게", "단기간에", "꾸준히",
+    ],
+}
+
+
+def _dedup_against(keyword: str, candidates: Sequence[str]) -> List[str]:
+    """원본과 의미적 중복(공백제거+소문자) 제거."""
+    orig_norm = keyword.replace(" ", "").lower()
+    seen_surface, seen_norm = {keyword}, {orig_norm}
+    out = []
+    for c in candidates:
+        c = " ".join((c or "").split())
+        norm = c.replace(" ", "").lower()
+        if c and c not in seen_surface and norm not in seen_norm:
+            seen_surface.add(c)
+            seen_norm.add(norm)
+            out.append(c)
+    return out
 
 
 def transmute(keyword: str, max_variants: int = 3) -> List[str]:
-    """medium 키워드를 long-tail 변형으로 재가공."""
+    """후방 호환 진입점 — 약점 정보 없으면 모든 처방을 균등하게 시도."""
+    base = (keyword or "").strip()
+    if not base:
+        return []
+    weaknesses = ["상업의도_부족", "경쟁도_높음", "트렌드_낮음"]
+    return transmute_with_diagnosis(base, weaknesses, max_variants=max_variants)
+
+
+def transmute_with_diagnosis(
+    keyword: str,
+    weaknesses: Sequence[str],
+    max_variants: int = 10,
+) -> List[str]:
+    """약점 진단 결과에 맞춰 처방형 변형 키워드 생성.
+
+    weaknesses 후보:
+      - "상업의도_부족" / "경쟁도_높음" / "트렌드_낮음"
+    """
     base = (keyword or "").strip()
     if not base:
         return []
 
-    out: list[str] = []
+    cands: list[str] = []
 
-    # 1) 범위 + 키워드 + 의도 (가장 정확한 long-tail)
-    for scope, intent in itertools.product(ALCHEMY_SCOPE, ALCHEMY_INTENT):
-        out.append(f"{scope} {base} {intent}")
-        if len(out) >= max_variants * 4:  # 후보를 충분히 만든 뒤 잘라낼 거라 여유 있게
-            break
+    if "상업의도_부족" in weaknesses:
+        for mod in ALCHEMY_TEMPLATES["상업의도"][:6]:
+            cands.append(f"{base} {mod}")
 
-    # 2) 키워드 + 의도 (범위 빠진 버전)
-    for intent in ALCHEMY_INTENT:
-        out.append(f"{base} {intent}")
+    if "경쟁도_높음" in weaknesses:
+        for mod in ALCHEMY_TEMPLATES["대상"][:5]:
+            cands.append(f"{mod} {base}")
+        for mod in ALCHEMY_TEMPLATES["상황"][:4]:
+            cands.append(f"{base} {mod}")
+        for mod in ALCHEMY_TEMPLATES["가격"][:3]:
+            cands.append(f"{mod} {base}")
+        for mod in ALCHEMY_TEMPLATES["기간"][:2]:
+            cands.append(f"{base} {mod}")
 
-    # dedup, 원 키워드 제외
-    seen, unique = set(), []
-    for c in out:
-        c = c.strip()
-        if c and c != base and c not in seen:
-            seen.add(c)
-            unique.append(c)
+    if "트렌드_낮음" in weaknesses:
+        for mod in ALCHEMY_TEMPLATES["목적"][:4]:
+            cands.append(f"{base} {mod}")
+        for mod in ALCHEMY_TEMPLATES["기간"][:2]:
+            cands.append(f"{base} {mod}")
 
-    return unique[:max_variants]
+    return _dedup_against(base, cands)[:max_variants]

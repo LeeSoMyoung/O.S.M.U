@@ -21,5 +21,13 @@ class BaseEvaluator(ABC):
     @abstractmethod
     def evaluate(self, keyword: str, *, seed: str = "") -> Evaluation: ...
 
+    def evaluate_longtail(self, keyword: str, *, seed: str = "") -> Evaluation:
+        """롱테일 변형(알케미 결과)을 더 관대하게 평가하는 모드.
+
+        기본 구현은 일반 evaluate() 와 동일. NaverGoldenEvaluator 는
+        가중치를 LONGTAIL_WEIGHTS 로 바꿔 호출한다.
+        """
+        return self.evaluate(keyword, seed=seed)
+
     def evaluate_many(self, keywords: Iterable[str], *, seed: str = "") -> List[Evaluation]:
         return [self.evaluate(k, seed=seed) for k in keywords]

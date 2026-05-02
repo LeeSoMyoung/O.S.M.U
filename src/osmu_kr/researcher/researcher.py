@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from ..config import Config
-from ..evaluator import build_evaluator
+from ..evaluator import build_evaluator, diagnose_weakness
 from ..evaluator.base import BaseEvaluator
 from ..models import (
     STATUS_GOLDEN,
