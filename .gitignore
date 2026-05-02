@@ -1,0 +1,90 @@
+# ========================================
+# Python
+# ========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ========================================
+# 본 프로젝트 — 자격증명 / 비밀
+# ========================================
+.env
+.env.local
+.env.*.local
+credentials/
+service_account*.json
+*.pem
+*.key
+
+# ========================================
+# 본 프로젝트 — 로컬 데이터
+# ========================================
+# 로컬 CSV 폴백 / 시연 결과 (개인 키워드가 들어 있으므로 git에는 올리지 않음)
+data/
+*.csv
+!demos/**/*.csv          # 데모 샘플 CSV 는 예외적으로 추적 (있다면)
+
+# 데모 실행 로그 (재현 가능하므로 git에 올리지 않음)
+demo_scenario_*.log
+*.log
+
+# ========================================
+# 도구 캐시
+# ========================================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ========================================
+# Streamlit
+# ========================================
+.streamlit/secrets.toml
+
+# ========================================
+# OS / 에디터
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# ========================================
+# Codespaces / Devcontainer 캐시
+# ========================================
+.devcontainer/.cache/

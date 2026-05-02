@@ -1,0 +1,9 @@
+# Core (필수)
+python-dateutil>=2.8.2
+
+# Google Sheets 실연동 (선택 — 자격증명 없으면 자동으로 로컬 폴백)
+gspread>=6.0.0
+google-auth>=2.27.0
+
+# 환경변수 로딩 (선택)
+python-dotenv>=1.0.0

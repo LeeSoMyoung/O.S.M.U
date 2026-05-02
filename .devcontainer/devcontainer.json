@@ -1,0 +1,63 @@
+{
+  "name": "OSMU Keyword Researcher",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "// ─────────────────────────────────────────────────────────": "",
+  "// Codespaces Prebuild 최적화":                              "",
+  "// • onCreateCommand   = prebuild 시점에 한 번 실행 (의존성 설치)": "",
+  "// • updateContentCommand = 코드 변경 시 재실행 (editable install 갱신)": "",
+  "// • postStartCommand  = 매번 컨테이너 시작 시 실행 (.env 자동 복사)": "",
+  "// 이렇게 분리하면 prebuild 캐시가 잘 동작해 시작이 빨라집니다.":   "",
+
+  "onCreateCommand": "bash .devcontainer/on-create.sh",
+  "updateContentCommand": "pip install -e . --no-deps",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+
+  "// 포트 자동 포워딩 — 8501은 Streamlit, 8000은 향후 FastAPI": "",
+  "forwardPorts": [8501, 8000],
+  "portsAttributes": {
+    "8501": {
+      "label": "OSMU Streamlit UI",
+      "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "FastAPI (확장)",
+      "onAutoForward": "ignore"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-toolsai.jupyter",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "[python]": {
+          "editor.formatOnSave": false
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true
+        }
+      }
+    }
+  },
+
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}/src:${containerWorkspaceFolder}/ui"
+  },
+
+  "// Codespace Secrets로 주입할 변수 (있으면 자동 사용)": "",
+  "containerEnv": {
+    "OSMU_STORAGE_BACKEND": "auto"
+  }
+}
